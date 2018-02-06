@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public abstract class NettyStreamingService<T> {
     private static final Logger LOG = LoggerFactory.getLogger(NettyStreamingService.class);
@@ -41,6 +42,7 @@ public abstract class NettyStreamingService<T> {
 
     private final int maxFramePayloadLength;
     private final URI uri;
+    private boolean isManualDisconnect = false;
     private Channel webSocketChannel;
     protected Map<String, Subscription> channels = new ConcurrentHashMap<>();
 
@@ -96,8 +98,8 @@ public abstract class NettyStreamingService<T> {
                 EventLoopGroup group = new NioEventLoopGroup();
 
                 final WebSocketClientHandler handler = getWebSocketClientHandler(WebSocketClientHandshakerFactory.newHandshaker(
-                  uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders(), maxFramePayloadLength),
-                  this::messageHandler);
+                        uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders(), maxFramePayloadLength),
+                        this::messageHandler);
 
                 Bootstrap b = new Bootstrap();
                 b.group(group)
@@ -111,7 +113,7 @@ public abstract class NettyStreamingService<T> {
                                 }
 
                                 WebSocketClientExtensionHandler clientExtensionHandler = getWebSocketClientExtensionHandler();
-                                List<ChannelHandler> handlers = new ArrayList<>(6);
+                                List<ChannelHandler> handlers = new ArrayList<>(7);
                                 handlers.add(new HttpClientCodec());
                                 handlers.add(new HttpServerKeepAliveHandler());
                                 handlers.add(new WriteTimeoutHandler(10));
@@ -156,7 +158,7 @@ public abstract class NettyStreamingService<T> {
     public abstract String getUnsubscribeMessage(String channelName) throws IOException;
 
     public String getSubscriptionUniqueId(String channelName, Object... args) {
-      return channelName;
+        return channelName;
     }
 
     /**
@@ -215,20 +217,20 @@ public abstract class NettyStreamingService<T> {
 
     public void resubscribeChannels() {
         for (String channelName : channels.keySet()) {
-            int resubscribeRetrys = 3;
+            int resubscribeRetries = 3;
 
             do {
                 try {
                     sendMessage(getSubscribeMessage(channelName, channels.get(channelName).args));
-                    resubscribeRetrys = 0;
+                    resubscribeRetries = 0;
                 } catch (IOException e) {
                     LOG.error("Failed to resubscribe channel: {}", channelName);
-                    resubscribeRetrys--;
+                    resubscribeRetries--;
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException ignored) {}
                 }
-            } while (resubscribeRetrys > 0);
+            } while (resubscribeRetries > 0);
         }
     }
 
@@ -278,12 +280,36 @@ public abstract class NettyStreamingService<T> {
         return webSocketChannel.isOpen();
     }
     
-    protected WebSocketClientExtensionHandler getWebSocketClientExtensionHandler(){
+    protected WebSocketClientExtensionHandler getWebSocketClientExtensionHandler() {
         return WebSocketClientCompressionHandler.INSTANCE;
     }
-    
-    protected WebSocketClientHandler getWebSocketClientHandler(WebSocketClientHandshaker handshaker, 
-                                                               WebSocketClientHandler.WebSocketMessageHandler handler){
-        return new WebSocketClientHandler(handshaker, handler);
+
+    protected WebSocketClientHandler getWebSocketClientHandler(WebSocketClientHandshaker handshaker,
+                                                               WebSocketClientHandler.WebSocketMessageHandler handler) {
+        return new NettyWebSocketClientHandler(handshaker, handler);
+    }
+
+
+    private class NettyWebSocketClientHandler extends  WebSocketClientHandler{
+        NettyWebSocketClientHandler(WebSocketClientHandshaker handshaker, WebSocketMessageHandler handler) {
+            super(handshaker, handler);
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) {
+            if (isManualDisconnect) {
+                isManualDisconnect = false;
+            } else {
+                super.channelInactive(ctx);
+                if (isWebSocketOpen() || connect().blockingAwait(10, TimeUnit.SECONDS)) {
+                    LOG.info("Resubscribing channels");
+                    resubscribeChannels();
+                }
+            }
+        }
+    }
+
+    public boolean isSocketOpen() {
+        return webSocketChannel.isOpen();
     }
 }
