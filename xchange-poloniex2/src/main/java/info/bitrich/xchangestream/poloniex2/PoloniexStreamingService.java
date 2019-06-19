@@ -49,6 +49,11 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
     protected void handleMessage(JsonNode message) {
         if (message.isArray()) {
             Integer channelId = Integer.valueOf(message.get(0).toString());
+
+            if (channelId == 1000) {
+                LOG.warn("channel 1000!");
+            }
+
             if (channelId > 0 && channelId < 1000) {
                 if (!message.has(2)) {
                     LOG.warn("Ignoring message because it doesn't contain events: {}", message);
