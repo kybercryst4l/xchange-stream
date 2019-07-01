@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import io.reactivex.Completable;
@@ -27,9 +28,10 @@ public class PoloniexStreamingExchange extends PoloniexExchange implements Strea
 
     private final PoloniexStreamingService streamingService;
     private PoloniexStreamingMarketDataService streamingMarketDataService;
+    private PoloniexStreamingAccountNotificationService streamingAccountNotificationService;
 
     public PoloniexStreamingExchange() {
-        this.streamingService = new PoloniexStreamingService(API_URI);
+        this.streamingService = new PoloniexStreamingService(API_URI, this);
     }
 
     @Override
@@ -37,6 +39,7 @@ public class PoloniexStreamingExchange extends PoloniexExchange implements Strea
         super.initServices();
         Map<CurrencyPair, Integer> currencyPairMap = getCurrencyPairMap();
         streamingMarketDataService = new PoloniexStreamingMarketDataService(streamingService, currencyPairMap);
+        streamingAccountNotificationService = new PoloniexStreamingAccountNotificationService(streamingService);
     }
 
     private Map<CurrencyPair, Integer> getCurrencyPairMap() {
@@ -83,6 +86,11 @@ public class PoloniexStreamingExchange extends PoloniexExchange implements Strea
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        return streamingAccountNotificationService;
     }
 
     @Override

@@ -3,9 +3,8 @@ package info.bitrich.xchangestream.poloniex2;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import info.bitrich.xchangestream.poloniex2.dto.PoloniexWebSocketEvent;
-import info.bitrich.xchangestream.poloniex2.dto.PoloniexWebSocketEventsTransaction;
-import info.bitrich.xchangestream.poloniex2.dto.PoloniexWebSocketSubscriptionMessage;
+import info.bitrich.xchangestream.poloniex2.dto.*;
+import info.bitrich.xchangestream.poloniex2.util.Crypto;
 import info.bitrich.xchangestream.service.netty.JsonNettyStreamingService;
 import io.reactivex.Observable;
 import org.knowm.xchange.currency.CurrencyPair;
@@ -13,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -33,8 +35,11 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
     private Instant lastHeartBeat = null;
     private Duration maxWebsocketLagDuration = Duration.ofSeconds(12);
 
-    public PoloniexStreamingService(String apiUrl) {
+    private PoloniexStreamingExchange poloniexStreamingExchange;
+
+    public PoloniexStreamingService(String apiUrl, PoloniexStreamingExchange poloniexStreamingExchange) {
         super(apiUrl, Integer.MAX_VALUE);
+        this.poloniexStreamingExchange = poloniexStreamingExchange;
     }
 
     private synchronized Instant getLastHeartBeat() {
@@ -48,10 +53,12 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
     @Override
     protected void handleMessage(JsonNode message) {
         if (message.isArray()) {
-            Integer channelId = Integer.valueOf(message.get(0).toString());
+            Integer channelId;
 
-            if (channelId == 1000) {
-                LOG.warn("channel 1000!");
+            if (message.get(0).toString().contains("\"")){
+                channelId = Integer.valueOf(message.get(0).toString().replaceAll("\"", ""));
+            } else {
+                channelId = Integer.valueOf(message.get(0).toString());
             }
 
             if (channelId > 0 && channelId < 1000) {
@@ -112,6 +119,16 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
         return subscriptions.get(channelName);
     }
 
+    @Override
+    public Observable<JsonNode> subscribeApiChannel(String channelName, Object... args) {
+        if (!channels.containsKey(channelName)) {
+            Observable<JsonNode> subscription = super.subscribeApiChannel(channelName, args);
+            subscriptions.put(channelName, subscription);
+        }
+
+        return subscriptions.get(channelName);
+    }
+
     public Observable<PoloniexWebSocketEvent> subscribeCurrencyPairChannel(CurrencyPair currencyPair) {
         String channelName = currencyPair.counter.toString() + "_" + currencyPair.base.toString();
         final ObjectMapper mapper = new ObjectMapper();
@@ -121,6 +138,18 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
                 .flatMapIterable(s -> {
                     PoloniexWebSocketEventsTransaction transaction = mapper.readValue(s.toString(), PoloniexWebSocketEventsTransaction.class);
                     return Arrays.asList(transaction.getEvents());
+                }).share();
+    }
+
+    public Observable<PoloniexWebSocketEvent> subscribeAccountNotifications() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        return subscribeApiChannel("1000")
+                .flatMapIterable(s -> {
+                    PoloniexWebSocketAccountNotificationEvents accountNotificationEvents = mapper.readValue(
+                            s.toString(), PoloniexWebSocketAccountNotificationEvents.class);
+                    return Arrays.asList(accountNotificationEvents.getEvents());
                 }).share();
     }
 
@@ -142,6 +171,32 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
     }
 
     @Override
+    public String getSubscribeApiMessage(String channelName, Object... args) throws IOException {
+        String key = poloniexStreamingExchange.getExchangeSpecification().getApiKey();
+        String secret = poloniexStreamingExchange.getExchangeSpecification().getSecretKey();
+        String payload = "nonce=" + Instant.now().toEpochMilli();
+        String sign = "";
+        try {
+            sign = Crypto.calculateHMAC(payload, secret);
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+
+        PoloniexWebSocketApiSubscriptionMessage subscribeApiMessage = new PoloniexWebSocketApiSubscriptionMessage("subscribe",
+                channelName,
+                key,
+                payload,
+                sign);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(subscribeApiMessage);
+    }
+
+    @Override
     public String getUnsubscribeMessage(String channelName) throws IOException {
         PoloniexWebSocketSubscriptionMessage subscribeMessage = new PoloniexWebSocketSubscriptionMessage("unsubscribe",
                 channelName);
@@ -150,12 +205,12 @@ public class PoloniexStreamingService extends JsonNettyStreamingService {
         return objectMapper.writeValueAsString(subscribeMessage);
     }
 
-    @Override
+    //@Override
     protected boolean isWebsocketWatcherSupported() {
         return true;
     }
 
-    @Override
+    //@Override
     protected boolean isWebsocketReconnectRequired() {
         return getLastHeartBeat() != null && getLastHeartBeat().plus(maxWebsocketLagDuration).isBefore(Instant.now());
     }
