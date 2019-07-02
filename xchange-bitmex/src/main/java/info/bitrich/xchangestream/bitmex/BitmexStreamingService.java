@@ -9,6 +9,7 @@ import info.bitrich.xchangestream.service.netty.JsonNettyStreamingService;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 
@@ -58,6 +59,11 @@ public class BitmexStreamingService extends JsonNettyStreamingService {
         BitmexWebSocketSubscriptionMessage subscribeMessage = new BitmexWebSocketSubscriptionMessage("subscribe", new String[]{channelName});
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(subscribeMessage);
+    }
+
+    @Override
+    public String getSubscribeApiMessage(String channelName, Object... args) throws IOException {
+        throw new NotImplementedException();
     }
 
     @Override

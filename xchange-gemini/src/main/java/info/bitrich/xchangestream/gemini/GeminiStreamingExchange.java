@@ -1,11 +1,13 @@
 package info.bitrich.xchangestream.gemini;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import io.reactivex.Completable;
 import io.reactivex.CompletableEmitter;
 import org.knowm.xchange.gemini.v1.GeminiExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by Lukas Zaoralek on 15.11.17.
@@ -39,6 +41,11 @@ public class GeminiStreamingExchange extends GeminiExchange implements Streaming
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 
     @Override

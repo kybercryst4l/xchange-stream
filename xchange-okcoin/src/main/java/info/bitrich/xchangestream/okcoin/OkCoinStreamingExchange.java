@@ -1,10 +1,12 @@
 package info.bitrich.xchangestream.okcoin;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import io.reactivex.Completable;
 import org.knowm.xchange.okcoin.OkCoinExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class OkCoinStreamingExchange extends OkCoinExchange implements StreamingExchange {
     private static final String API_URI = "wss://real.okcoin.com:10440/websocket";
@@ -44,5 +46,10 @@ public class OkCoinStreamingExchange extends OkCoinExchange implements Streaming
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 }

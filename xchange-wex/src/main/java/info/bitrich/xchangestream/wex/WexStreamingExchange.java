@@ -1,11 +1,13 @@
 package info.bitrich.xchangestream.wex;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import info.bitrich.xchangestream.service.pusher.PusherStreamingService;
 import io.reactivex.Completable;
 import org.knowm.xchange.wex.v3.WexExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by Lukas Zaoralek on 16.11.17.
@@ -40,6 +42,11 @@ public class WexStreamingExchange extends WexExchange implements StreamingExchan
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 
     @Override

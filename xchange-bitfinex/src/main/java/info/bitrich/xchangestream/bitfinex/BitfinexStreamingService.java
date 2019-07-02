@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketClientExtensio
 import org.knowm.xchange.exceptions.ExchangeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -129,6 +130,11 @@ public class BitfinexStreamingService extends JsonNettyStreamingService {
 
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(subscribeMessage);
+    }
+
+    @Override
+    public String getSubscribeApiMessage(String channelName, Object... args) throws IOException {
+        throw new NotImplementedException();
     }
 
     @Override

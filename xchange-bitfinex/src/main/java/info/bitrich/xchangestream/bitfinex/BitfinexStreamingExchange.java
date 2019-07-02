@@ -1,11 +1,13 @@
 package info.bitrich.xchangestream.bitfinex;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import io.reactivex.Completable;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.bitfinex.v1.BitfinexExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by Lukas Zaoralek on 7.11.17.
@@ -52,5 +54,10 @@ public class BitfinexStreamingExchange extends BitfinexExchange implements Strea
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 }

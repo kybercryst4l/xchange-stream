@@ -1,11 +1,13 @@
 package info.bitrich.xchangestream.poloniex;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import info.bitrich.xchangestream.service.wamp.WampStreamingService;
 import io.reactivex.Completable;
 import org.knowm.xchange.poloniex.PoloniexExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class PoloniexStreamingExchange extends PoloniexExchange implements StreamingExchange {
     private static final String API_URI = "wss://api.poloniex.com";
@@ -37,6 +39,11 @@ public class PoloniexStreamingExchange extends PoloniexExchange implements Strea
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 
     @Override

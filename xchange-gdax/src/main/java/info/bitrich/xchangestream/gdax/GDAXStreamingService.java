@@ -13,6 +13,7 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketClientExtensio
 import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -69,6 +70,11 @@ public class GDAXStreamingService extends JsonNettyStreamingService {
         GDAXWebSocketSubscriptionMessage subscribeMessage = new GDAXWebSocketSubscriptionMessage(SUBSCRIBE, product);
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(subscribeMessage);
+    }
+
+    @Override
+    public String getSubscribeApiMessage(String channelName, Object... args) throws IOException {
+        throw new NotImplementedException();
     }
 
     @Override

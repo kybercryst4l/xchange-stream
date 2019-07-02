@@ -178,6 +178,8 @@ public abstract class NettyStreamingService<T> {
 
     public abstract String getSubscribeMessage(String channelName, Object... args) throws IOException;
 
+    public abstract String getSubscribeApiMessage(String channelName, Object... args) throws IOException;
+
     public abstract String getUnsubscribeMessage(String channelName) throws IOException;
 
     public String getSubscriptionUniqueId(String channelName, Object... args) {
@@ -236,20 +238,54 @@ public abstract class NettyStreamingService<T> {
         }).share();
     }
 
+    public Observable<T> subscribeApiChannel(String channelName, Object... args) {
+        final String channelId = getSubscriptionUniqueId(channelName, args);
+        LOG.info("Subscribing to api channel {}", channelId);
+
+        return Observable.<T>create(e -> {
+            if (webSocketChannel == null || !webSocketChannel.isOpen()) {
+                e.onError(new NotConnectedException());
+            }
+
+            if (!channels.containsKey(channelId)) {
+                Subscription newSubscription = new Subscription(e, channelName, args);
+                channels.put(channelId, newSubscription);
+                try {
+                    sendMessage(getSubscribeApiMessage(channelName, args));
+                } catch (IOException throwable) {
+                    e.onError(throwable);
+                }
+            }
+        }).doOnDispose(() -> {
+            if (!channels.containsKey(channelId)) {
+                sendMessage(getUnsubscribeMessage(channelId));
+                channels.remove(channelId);
+            }
+        }).share();
+    }
+
     private void resubscribeChannels() {
         for (Map.Entry<String, Subscription> channel : channels.entrySet()) {
             int resubscribeRetries = 3;
 
             do {
                 try {
-                    sendMessage(getSubscribeMessage(channel.getKey(), channel.getValue().args));
+                    // TODO: if unplug network cable, it may happen, it is connected multiple times
+                    //sendMessage(getUnsubscribeMessage(channel.getKey()));
+
+                    if (channel.getKey().equals("1000")) {
+                        sendMessage(getSubscribeApiMessage(channel.getKey(), channel.getValue().args));
+                    } else {
+                        sendMessage(getSubscribeMessage(channel.getKey(), channel.getValue().args));
+                    }
                     resubscribeRetries = 0;
                 } catch (IOException e) {
                     LOG.error("Failed to resubscribe channel: {}", channel);
                     resubscribeRetries--;
                     try {
                         Thread.sleep(500);
-                    } catch (InterruptedException ignored) {}
+                    } catch (InterruptedException ignored) {
+                    }
                 }
             } while (resubscribeRetries > 0);
         }
@@ -310,7 +346,7 @@ public abstract class NettyStreamingService<T> {
 
     protected void reconnectAndResubscribe() {
         if (!isReconnectingWebsocket) {
-            isReconnectingWebsocket  = true;
+            isReconnectingWebsocket = true;
             try {
                 final Completable c = connect()
                         .doOnError(t -> LOG.warn("Problem with reconnect", t))

@@ -1,11 +1,13 @@
 package info.bitrich.xchangestream.binance;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import io.reactivex.Completable;
 import io.reactivex.CompletableEmitter;
 import org.knowm.xchange.binance.BinanceExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class BinanceStreamingExchange extends BinanceExchange implements StreamingExchange {
     private static final String API_BASE_URI = "wss://stream.binance.com:9443/ws/";
@@ -41,6 +43,11 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 }
 

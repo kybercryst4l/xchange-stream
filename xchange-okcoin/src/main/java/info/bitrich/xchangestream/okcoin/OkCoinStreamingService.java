@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import info.bitrich.xchangestream.okcoin.dto.WebSocketMessage;
 import info.bitrich.xchangestream.service.netty.JsonNettyStreamingService;
 import org.knowm.xchange.exceptions.ExchangeException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 
@@ -25,6 +26,11 @@ public class OkCoinStreamingService extends JsonNettyStreamingService {
 
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(webSocketMessage);
+    }
+
+    @Override
+    public String getSubscribeApiMessage(String channelName, Object... args) throws IOException {
+        throw new NotImplementedException();
     }
 
     @Override

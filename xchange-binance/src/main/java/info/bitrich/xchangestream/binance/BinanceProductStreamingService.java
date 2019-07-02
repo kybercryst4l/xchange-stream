@@ -6,6 +6,7 @@ import info.bitrich.xchangestream.service.netty.JsonNettyStreamingService;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 
@@ -47,6 +48,11 @@ public class BinanceProductStreamingService extends JsonNettyStreamingService {
     @Override
     public String getSubscribeMessage(String channelName, Object... args) throws IOException {
         return "Subscribed to channel: " + channelName;
+    }
+
+    @Override
+    public String getSubscribeApiMessage(String channelName, Object... args) throws IOException {
+        throw new NotImplementedException();
     }
 
     @Override

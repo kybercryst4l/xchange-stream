@@ -1,6 +1,7 @@
 package info.bitrich.xchangestream.bitflyer;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import info.bitrich.xchangestream.service.pubnub.PubnubStreamingService;
@@ -8,6 +9,7 @@ import io.reactivex.Completable;
 import org.knowm.xchange.BaseExchange;
 import org.knowm.xchange.ExchangeSpecification;
 import si.mazi.rescu.SynchronizedValueFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by Lukas Zaoralek on 14.11.17.
@@ -52,6 +54,11 @@ public class BitflyerStreamingExchange extends BaseExchange implements Streaming
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 
     @Override

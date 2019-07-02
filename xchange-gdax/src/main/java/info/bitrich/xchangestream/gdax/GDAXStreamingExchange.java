@@ -1,12 +1,14 @@
 package info.bitrich.xchangestream.gdax;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.core.StreamingAccountNotificationService;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import info.bitrich.xchangestream.service.netty.WebSocketClientHandler;
 import io.reactivex.Completable;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.gdax.GDAXExchange;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * GDAX Streaming Exchange. Connects to live WebSocket feed.
@@ -52,6 +54,11 @@ public class GDAXStreamingExchange extends GDAXExchange implements StreamingExch
     @Override
     public StreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public StreamingAccountNotificationService getStreamingAccountNotificationService() {
+        throw new NotImplementedException();
     }
 
     /**
